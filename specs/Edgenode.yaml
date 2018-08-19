@@ -1,0 +1,713 @@
+openapi: 3.0.0
+servers:
+  - url: 'http://localhost:24230/v1'
+info:
+  version: "0.0.1"
+  title: Edgenode Device API
+tags:
+  - name: Power Supply
+  - name: Electronic Load
+
+x-automate-services:
+  - name: Power Supply
+    category: Instruments
+    runner: fetch
+    events:
+      - name: OCP
+        description: Over Current Protection
+      - name: OVP
+        description: Over Voltage Protection
+      - name: OPP
+        description: Over Power Protection
+      - name: OTP
+        description: Over Temperature Protection
+  - name: Electronic Load
+    category: Instruments
+    runner: fetch
+    events:
+      - name: OCP
+        description: Over Current Protection
+      - name: OVP
+        description: Over Voltage Protection
+      - name: OPP
+        description: Over Power Protection
+      - name: RVP
+        description: Reverse Voltage Protection
+      - name: UVP
+        description: Under Voltage Protection
+
+paths:
+  /pws:
+    x-swagger-router-controller: pws
+    x-automate-service: Power Supply
+    get:
+      tags:
+        - Power Supply
+      summary: Query power devices
+      description: Query connected power supply devices.
+      operationId: queryPWSDevices
+      responses:
+        '200':
+          description: Power supply device IDs. Can be empty array if there's no devices.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+        '400':
+          $ref: '#/components/responses/400BadRequest'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '403':
+          $ref: '#/components/responses/403Forbidden'
+        '404':
+          $ref: '#/components/responses/404NotFound'
+        '500':
+          $ref: '#/components/responses/500InternalServerError'
+        '501':
+          $ref: '#/components/responses/501NotImplemented'
+        '503':
+          $ref: '#/components/responses/503ServiceUnavailable'
+  '/pws/{dev-id}/output-config/{conf-id}':
+    x-swagger-router-controller: pws
+    x-automate-service: Power Supply
+    get:
+      tags:
+        - Power Supply
+      summary: Read power output setting
+      description: Read configurable output setting specified by given config ID.
+      operationId: getPWSOutputConfig
+      parameters:
+        - in: path
+          name: dev-id
+          required: true
+          description: Serial number of the power supply.
+          schema:
+            type: string
+        - in: path
+          name: conf-id
+          required: true
+          description: >-
+            A power supply device has 10 configurable output settings. This
+            parameter is used to choose one of the 10 output settings by given
+            ID.
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Power supply output setting.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PWSOutputSetting'
+        '400':
+          $ref: '#/components/responses/400BadRequest'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '403':
+          $ref: '#/components/responses/403Forbidden'
+        '404':
+          $ref: '#/components/responses/404NotFound'
+        '500':
+          $ref: '#/components/responses/500InternalServerError'
+        '501':
+          $ref: '#/components/responses/501NotImplemented'
+        '503':
+          $ref: '#/components/responses/503ServiceUnavailable'
+    post:
+      tags:
+        - Power Supply
+      summary: Write power output setting
+      description: Write configurable output setting with given config ID.
+      operationId: setPWSOutputConfig
+      parameters:
+        - in: path
+          name: dev-id
+          required: true
+          description: Serial number of the power supply.
+          schema:
+            type: string
+        - in: path
+          name: conf-id
+          required: true
+          description: >-
+            A power supply device has 10 configurable output settings. This
+            parameter is used to choose one of the 10 output settings by given
+            ID.
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+        '400':
+          $ref: '#/components/responses/400BadRequest'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '403':
+          $ref: '#/components/responses/403Forbidden'
+        '404':
+          $ref: '#/components/responses/404NotFound'
+        '500':
+          $ref: '#/components/responses/500InternalServerError'
+        '501':
+          $ref: '#/components/responses/501NotImplemented'
+        '503':
+          $ref: '#/components/responses/503ServiceUnavailable'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PWSOutputSetting'
+        description: Power supply output setting.
+        required: true
+  '/pws/{dev-id}/output-control/{conf-id}':
+    x-swagger-router-controller: pws
+    x-automate-service: Power Supply
+    post:
+      tags:
+        - Power Supply
+      summary: Toggle power output setting
+      description: Enable or disable output setting specified by config ID.
+      operationId: setPWSOutputControl
+      parameters:
+        - in: path
+          name: dev-id
+          required: true
+          description: Serial number of the power supply.
+          schema:
+            type: string
+        - in: path
+          name: conf-id
+          required: true
+          description: >-
+            A power supply device has 10 configurable output settings. This
+            parameter is used to choose one of the 10 output settings by given
+            ID.
+          schema:
+            type: string
+        - in: query
+          name: oe
+          required: true
+          description: Output enable
+          schema:
+            type: string
+            enum:
+              - 'ON'
+              - 'OFF'
+      responses:
+        '200':
+          description: OK
+        '400':
+          $ref: '#/components/responses/400BadRequest'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '403':
+          $ref: '#/components/responses/403Forbidden'
+        '404':
+          $ref: '#/components/responses/404NotFound'
+        '500':
+          $ref: '#/components/responses/500InternalServerError'
+        '501':
+          $ref: '#/components/responses/501NotImplemented'
+        '503':
+          $ref: '#/components/responses/503ServiceUnavailable'
+  '/pws/{dev-id}/measurement':
+    x-swagger-router-controller: pws
+    x-automate-service: Power Supply
+    post:
+      tags:
+        - Power Supply
+      summary: Set power measurement type
+      description: Set measurement type for power supply device.
+      operationId: setPWSMeasureType
+      parameters:
+        - in: path
+          name: dev-id
+          required: true
+          description: Serial number of the power supply.
+          schema:
+            type: string
+        - in: query
+          name: type
+          required: true
+          description: Measurement type.
+          schema:
+            type: string
+            enum:
+              - vout
+              - iout
+              - power
+      responses:
+        '200':
+          description: OK
+        '400':
+          $ref: '#/components/responses/400BadRequest'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '403':
+          $ref: '#/components/responses/403Forbidden'
+        '404':
+          $ref: '#/components/responses/404NotFound'
+        '500':
+          $ref: '#/components/responses/500InternalServerError'
+        '501':
+          $ref: '#/components/responses/501NotImplemented'
+        '503':
+          $ref: '#/components/responses/503ServiceUnavailable'
+  '/pws/{dev-id}/datalog':
+    post:
+      tags:
+        - Power Supply
+      summary: Toggle power data loging
+      description: Start or Stop data loging for power supply device.
+      operationId: setDatalog
+      parameters:
+        - in: path
+          name: dev-id
+          required: true
+          description: Serial number of the power supply.
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PWSDatalogSetting'
+        description: Power supply datalog setting.
+        required: true
+      responses:
+        '200':
+          description: OK
+        '400':
+          $ref: '#/components/responses/400BadRequest'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '403':
+          $ref: '#/components/responses/403Forbidden'
+        '404':
+          $ref: '#/components/responses/404NotFound'
+        '500':
+          $ref: '#/components/responses/500InternalServerError'
+        '501':
+          $ref: '#/components/responses/501NotImplemented'
+        '503':
+          $ref: '#/components/responses/503ServiceUnavailable'
+        
+  
+  /load:
+    x-swagger-router-controller: load
+    x-automate-service: Electronic Load
+    get:
+      tags:
+        - Electronic Load
+      summary: Query load devices
+      description: Query connected electronic load devices.
+      operationId: queryLoadDevices
+      responses:
+        '200':
+          description: >-
+            Electronic load device IDs. Can be empty array if there's no
+            devices.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+        '400':
+          $ref: '#/components/responses/400BadRequest'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '403':
+          $ref: '#/components/responses/403Forbidden'
+        '404':
+          $ref: '#/components/responses/404NotFound'
+        '500':
+          $ref: '#/components/responses/500InternalServerError'
+        '501':
+          $ref: '#/components/responses/501NotImplemented'
+        '503':
+          $ref: '#/components/responses/503ServiceUnavailable'
+  '/load/{dev-id}/{ch-id}/input-config/{conf-id}':
+    x-swagger-router-controller: load
+    x-automate-service: Electronic Load
+    get:
+      tags:
+        - Electronic Load
+      summary: Read load input setting
+      description: Read configurable input setting of load device with given config ID.
+      operationId: getLoadInputConfig
+      parameters:
+        - in: path
+          name: dev-id
+          required: true
+          description: Serial number of the power supply.
+          schema:
+            type: string
+        - in: path
+          name: ch-id
+          required: true
+          description: Channel number to write the setting.
+          schema:
+            type: string
+        - in: path
+          name: conf-id
+          required: true
+          description: >-
+            An electronic load device has 10 configurable output settings. This
+            parameter is used to choose one of the 10 output settings by given
+            ID.
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  mode:
+                    $ref: '#/components/schemas/LoadInputMode'
+                  dynamic:
+                    $ref: '#/components/schemas/LoadInputDynamicSetting'
+                  static:
+                    $ref: '#/components/schemas/LoadInputStaticSetting'
+                  protection:
+                    $ref: '#/components/schemas/LoadInputProtectionSetting'
+        '400':
+          $ref: '#/components/responses/400BadRequest'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '403':
+          $ref: '#/components/responses/403Forbidden'
+        '404':
+          $ref: '#/components/responses/404NotFound'
+        '500':
+          $ref: '#/components/responses/500InternalServerError'
+        '501':
+          $ref: '#/components/responses/501NotImplemented'
+        '503':
+          $ref: '#/components/responses/503ServiceUnavailable'
+    post:
+      tags:
+        - Electronic Load
+      summary: Write load input setting
+      description: Write configurable input setting of load device with given config ID.
+      operationId: setLoadInputConfig
+      parameters:
+        - in: path
+          name: dev-id
+          required: true
+          description: Serial number of the power supply.
+          schema:
+            type: string
+        - in: path
+          name: ch-id
+          required: true
+          description: Channel number to write the setting.
+          schema:
+            type: string
+        - in: path
+          name: conf-id
+          required: true
+          description: >-
+            An electronic load device has 10 configurable input settings. This
+            parameter is used to choose one of the 10 input settings by given
+            ID.
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+        '400':
+          $ref: '#/components/responses/400BadRequest'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '403':
+          $ref: '#/components/responses/403Forbidden'
+        '404':
+          $ref: '#/components/responses/404NotFound'
+        '500':
+          $ref: '#/components/responses/500InternalServerError'
+        '501':
+          $ref: '#/components/responses/501NotImplemented'
+        '503':
+          $ref: '#/components/responses/503ServiceUnavailable'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                mode:
+                  $ref: '#/components/schemas/LoadInputMode'
+                dynamic:
+                  $ref: '#/components/schemas/LoadInputDynamicSetting'
+                static:
+                  $ref: '#/components/schemas/LoadInputStaticSetting'
+                protection:
+                  $ref: '#/components/schemas/LoadInputProtectionSetting'
+        description: Electronic load input setting.
+        required: true
+  '/load/{dev-id}/{ch-id}/input-control/{conf-id}':
+    x-swagger-router-controller: load
+    x-automate-service: Electronic Load
+    post:
+      tags:
+        - Electronic Load
+      summary: Toggle load input setting
+      description: Enable or disable input setting of load device pecified by config ID.
+      operationId: setLoadInputControl
+      parameters:
+        - in: path
+          name: dev-id
+          required: true
+          description: Serial number of the electronic load.
+          schema:
+            type: string
+        - in: path
+          name: ch-id
+          required: true
+          description: Channel number to write the setting.
+          schema:
+            type: string
+        - in: path
+          name: conf-id
+          required: true
+          description: >-
+            An electronic load device has 10 configurable input settings. This
+            parameter is used to choose one of the 10 input settings by given
+            ID.
+          schema:
+            type: string
+        - in: query
+          name: oe
+          required: true
+          description: Input enable
+          schema:
+            type: string
+            enum:
+              - 'ON'
+              - 'OFF'
+      responses:
+        '200':
+          description: OK
+        '400':
+          $ref: '#/components/responses/400BadRequest'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '403':
+          $ref: '#/components/responses/403Forbidden'
+        '404':
+          $ref: '#/components/responses/404NotFound'
+        '500':
+          $ref: '#/components/responses/500InternalServerError'
+        '501':
+          $ref: '#/components/responses/501NotImplemented'
+        '503':
+          $ref: '#/components/responses/503ServiceUnavailable'
+  /swagger:
+    x-swagger-pipe: swagger_raw
+
+components:
+  schemas:
+    PWSOutputSetting:
+      type: object
+      properties:
+        vout:
+          type: number
+          description: Voltage output level.
+        vlimit:
+          type: number
+          description: OVP level.
+        iout:
+          type: number
+          description: Current output level.
+        ilimit:
+          type: number
+          description: OCP level.
+        mode:
+          type: string
+          enum:
+            - CC
+            - CV
+            - VARY
+          description: |
+            Output mode:
+              * `CC` - Constant Current
+              * `CV` - Constant Voltage
+              * `VARY` - Variable
+        protect:
+          type: string
+          description: Protected mode.
+          enum:
+            - 'ON'
+            - 'OFF'
+        ocptrip:
+          type: string
+          description: Enable OCP trip.
+          enum:
+            - 'ON'
+            - 'OFF'
+    PWSDatalogSetting:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Naming for loging file.
+        action:
+          type: string
+          enum:
+            - start
+            - stop
+          description: |
+             loging action:
+              * `start` - Start loggin.
+              * `stop` - Stop loggin.
+        interval:
+          type: number
+          description: time to start next log (ms).
+        timeout:
+          type: number
+          description: everall log time.
+        type:
+          type: string
+          enum:
+            - volt
+            - curr
+            - all
+          description: |
+             loging type:
+              * `volt` - log vout value.
+              * `curr` - log iout value.
+              * `all` - log vout and iout value.
+    LoadInputMode:
+      type: string
+      enum:
+        - CC
+        - CV
+        - CR
+        - CP
+      description: |
+        Input modes:
+          * `CC` - Constant Current
+          * `CV` - Constant Voltage
+          * `CR` - Constant Resistance
+          * `CP` - Constant Power
+    LoadInputDynamicSetting:
+      type: object
+      properties:
+        level1:
+          type: number
+          description: TODO
+        level2:
+          type: number
+          description: TODO
+        slewRateRise:
+          type: number
+          description: TODO
+        slewRateFall:
+          type: number
+          description: TODO
+        timer1:
+          type: number
+          description: TODO
+        timer2:
+          type: number
+          description: TODO
+    LoadInputStaticSetting:
+      type: object
+      properties:
+        aValue:
+          type: number
+          description: TODO
+        bValue:
+          type: number
+          description: TODO
+        slewRateRise:
+          type: number
+          description: TODO
+        slewRateFall:
+          type: number
+          description: TODO
+        currLimit:
+          type: number
+          description: TODO
+    LoadInputProtectionSetting:
+      type: object
+      properties:
+        ocp:
+          $ref: '#/components/schemas/ProtectionSetting'
+        ovp:
+          $ref: '#/components/schemas/ProtectionSetting'
+        opp:
+          $ref: '#/components/schemas/ProtectionSetting'
+        rvp:
+          $ref: '#/components/schemas/ProtectionSetting'
+        uvp:
+          $ref: '#/components/schemas/ProtectionSetting'
+    ProtectionSetting:
+      type: object
+      properties:
+        level:
+          type: number
+        setting:
+          type: object
+      required:
+        - level
+        - setting
+    Error:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+      required:
+        - code
+        - message
+  responses:
+    400BadRequest:
+      description: The request was invalid or cannot be otherwise served.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    401Unauthorized:
+      description: Authentication credentials were missing or incorrect.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    403Forbidden:
+      description: The request has been refused or access is not allowed.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    404NotFound:
+      description: The requested resource does not exist.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    500InternalServerError:
+      description: Internal server error.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    501NotImplemented:
+      description: The request method is not supported.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    503ServiceUnavailable:
+      description: 'Service unavailable, try again later.'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
