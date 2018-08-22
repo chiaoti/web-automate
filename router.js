@@ -64,7 +64,11 @@ module.exports = function (specPath, dbPath) {
   /*
    * Create a flow
    */
-  router.post('/flow', stop, function (req, res) {
+  router.post('/flow', function (req, res) {
+    if (req.body.id && automate.getFlowById(req.body.id)) {
+      res.status(409).send('Given flow ID already exists.')
+      return
+    }
     const flow = automate.createFlow(req.body)
     res.status(200).send(flow.id)
   })
@@ -81,19 +85,34 @@ module.exports = function (specPath, dbPath) {
   /*
    * Update flow by ID
    */
-  router.put('/flow/:id', stop, function (req, res) {
+  router.put('/flow/:id', function (req, res) {
     const flow = automate.getFlowById(req.params.id)
     if (!flow) {
       res.sendStatus(404)
       return
     }
 
-    flow.name = req.body.name
-    flow.description = req.body.description
-    flow.owner = req.body.owner
     flow.lastModifiedDate = new Date()
-    flow.active = req.body.active
-    flow.logo = req.body.logo
+
+    if (req.body.name !== undefined) {
+      flow.name = req.body.name
+    }
+
+    if (req.body.description !== undefined) {
+      flow.description = req.body.description
+    }
+
+    if (req.body.owner !== undefined) {
+      flow.owner = req.body.owner
+    }
+
+    if (req.body.active !== undefined) {
+      flow.active = req.body.active
+    }
+
+    if (req.body.logo !== undefined) {
+      flow.logo = req.body.logo
+    }
 
     if (Array.isArray(req.body.tags)) {
       flow.tags.forEach(tag => flow.removeTag(tag))
@@ -104,12 +123,14 @@ module.exports = function (specPath, dbPath) {
       flow.triggers.forEach(event => flow.removeTrigger(event))
       req.body.triggers.forEach(event => flow.addTrigger(event))
     }
+
+    res.sendStatus(200)
   })
 
   /*
    * Destroy flow by ID
    */
-  router.delete('/flow/:id', stop, function (req, res) {
+  router.delete('/flow/:id', function (req, res) {
     const flow = automate.getFlowById(req.params.id)
     if (!flow) {
       res.sendStatus(404)
@@ -123,7 +144,7 @@ module.exports = function (specPath, dbPath) {
   /*
    * Run a flow
    */
-  router.post('/flow/:id', stop, function (req, res) {
+  router.post('/flow/:id', function (req, res) {
     const args = req.body
     const flow = automate.getFlowById(req.params.id)
 
@@ -133,7 +154,7 @@ module.exports = function (specPath, dbPath) {
     }
 
     automate.emit(Automate.InternalEvents.Run, {
-      flows: [flow],
+      flows: [flow.id],
       args
     })
 
@@ -143,12 +164,17 @@ module.exports = function (specPath, dbPath) {
   /*
    * Add an action in staging area to a flow
    */
-  router.post('/flow/:flowId/action/:actionId', stop, function (req, res) {
-    const stagingAction = stagingActions[req.params.actionId]
+  router.post('/flow/:flowId/action/:actionId', function (req, res) {
+    const stagingAction = stagingActions.find(act => act.id === req.params.actionId)
     const flow = automate.getFlowById(req.params.flowId)
 
     if (!stagingAction || !flow) {
       res.sendStatus(404)
+      return
+    }
+
+    if (flow.getActionById(req.params.actionId)) {
+      res.status(409).send('Action with given ID already exists.')
       return
     }
 
@@ -159,7 +185,7 @@ module.exports = function (specPath, dbPath) {
   /*
    * Move an action to given position in a flow
    */
-  router.put('/flow/:flowId/action/:actionId/position/:pos', stop, function (req, res) {
+  router.put('/flow/:flowId/action/:actionId/position/:pos', function (req, res) {
     const flow = automate.getFlowById(req.params.flowId)
 
     if (!flow) {
@@ -174,14 +200,14 @@ module.exports = function (specPath, dbPath) {
       return
     }
 
-    flow.moveAction(action, req.params.pos)
+    flow.moveAction(action, Number(req.params.pos))
     res.sendStatus(200)
   })
 
   /*
    * Remove an action in a flow
    */
-  router.delete('/flow/:flowId/action/:actionId', stop, function (req, res) {
+  router.delete('/flow/:flowId/action/:actionId', function (req, res) {
     const flow = automate.getFlowById(req.params.flowId)
 
     if (!flow) {
